@@ -1,17 +1,56 @@
 name: Terraform Multi-Env Deploy
 
 on:
+  pull_request:
+    branches:
+      - dev
+      - main
+
   push:
     branches:
-      - main
       - dev
+      - main
 
 jobs:
   # =========================
-  # DEV
+  # PLAN (PRs)
+  # =========================
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan
+
+  # =========================
+  # DEV DEPLOY
   # =========================
   deploy-dev:
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: dev
 
@@ -20,7 +59,8 @@ jobs:
         working-directory: terraform
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Configure AWS (DEV)
         uses: aws-actions/configure-aws-credentials@v4
@@ -29,19 +69,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-      - run: terraform init
-      - run: terraform validate
-      - run: terraform plan
+      - name: Terraform Init
+        run: terraform init
 
-      - run: terraform apply -auto-approve
+      - name: Terraform Apply (DEV)
+        run: terraform apply -auto-approve
 
   # =========================
-  # PROD
+  # PROD DEPLOY
   # =========================
   deploy-prod:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: prod
 
@@ -50,7 +91,8 @@ jobs:
         working-directory: terraform
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Configure AWS (PROD)
         uses: aws-actions/configure-aws-credentials@v4
@@ -59,11 +101,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-      - run: terraform init
-      - run: terraform validate
-      - run: terraform plan
+      - name: Terraform Init
+        run: terraform init
 
-      # 🔥 Aqui você pode exigir aprovação manual
-      - run: terraform apply -auto-approve
+      - name: Terraform Apply (PROD)
+        run: terraform apply -auto-approve
