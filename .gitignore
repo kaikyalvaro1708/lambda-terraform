@@ -1,0 +1,57 @@
+# =========================
+# Terraform
+# =========================
+
+# Diretório de plugins/providers (MUITO pesado)
+.terraform/
+
+# State files (NUNCA subir)
+*.tfstate
+*.tfstate.*
+
+# Lock file (ver observação abaixo)
+.terraform.lock.hcl
+
+# Logs
+crash.log
+
+# Variáveis sensíveis
+*.tfvars
+*.tfvars.json
+
+# Overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# =========================
+# Lambda (Python)
+# =========================
+
+# Zip gerado automaticamente
+terraform/lambda.zip
+
+# Cache Python
+__pycache__/
+*.pyc
+
+# Ambiente virtual
+venv/
+.env/
+
+# =========================
+# Sistema / IDE
+# =========================
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# JetBrains
+.idea/
