@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "lambda_name" {
   description = "lambda_test_terraform"
   type        = string
-  default     = "lambda_collector"
+  default     = "lambda_collecto"
 }
 
 variable "lambda_runtime" {
