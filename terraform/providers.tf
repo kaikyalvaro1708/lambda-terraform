@@ -9,8 +9,10 @@ terraform {
       version = "~> 2.4"
     }
   }
-}
 
-provider "aws" {
-  region = var.aws_region
+  backend "s3" {
+    bucket = "lambda-collector-tfstate"
+    key    = "lambda/terraform.tfstate"
+    region = "us-east-1"
+  }
 }
