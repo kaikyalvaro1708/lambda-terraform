@@ -5,27 +5,27 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/lambda.zip"
 }
 
-# # IAM ROLE
-# resource "aws_iam_role" "lambda_role" {
-#   name = "${var.lambda_name}_role"
+# IAM ROLE
+resource "aws_iam_role" "lambda_role" {
+  name = "${var.lambda_name}_role"
 
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17",
-#     Statement = [{
-#       Action = "sts:AssumeRole",
-#       Effect = "Allow",
-#       Principal = {
-#         Service = "lambda.amazonaws.com"
-#       }
-#     }]
-#   })
-# }
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+}
 
-# # POLICY BÁSICA (logs)
-# resource "aws_iam_role_policy_attachment" "lambda_basic" {
-#   role       = aws_iam_role.lambda_role.name
-#   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-# }
+# POLICY BÁSICA (logs)
+resource "aws_iam_role_policy_attachment" "lambda_basic" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
 
 # LAMBDA
 resource "aws_lambda_function" "lambda" {
