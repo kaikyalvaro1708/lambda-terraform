@@ -22,8 +22,8 @@ variable "lambda_handler" {
   default     = "app.lambda_handler"
 }
 
-variable "youtube_api_key" {
-  description = "API Key do YouTube"
-  type        = string
-  sensitive   = true
-}
+# variable "youtube_api_key" {
+#   description = "API Key do YouTube"
+#   type        = string
+#   sensitive   = true
+# }
