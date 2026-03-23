@@ -39,6 +39,14 @@ resource "aws_lambda_function" "lambda" {
 
   role = aws_iam_role.lambda_role.arn
 
+  timeout = 15
+
+  environment {
+    variables = {
+      YOUTUBE_API_KEY = var.youtube_api_key
+    }
+  }
+
   depends_on = [
     aws_iam_role_policy_attachment.lambda_basic
   ]

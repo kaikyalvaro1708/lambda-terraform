@@ -4,6 +4,7 @@
 
 # Diretório de plugins/providers (MUITO pesado)
 .terraform/
+.tfvars
 
 # State files (NUNCA subir)
 *.tfstate
