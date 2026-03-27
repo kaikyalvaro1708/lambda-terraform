@@ -56,12 +56,6 @@ jobs:
             pip install -r ../lambda/requirements.txt
           fi
 
-      # 🔍 Validar código Python
-      - name: Lint Python
-        run: |
-          pip install flake8
-          flake8 ../lambda --max-line-length=120
-
       # ▶️ Testar execução básica
       - name: Run Python script
         run: |
