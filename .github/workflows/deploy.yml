@@ -7,8 +7,7 @@ on:
 
   push:
     branches:
-      - develop
-      - main
+      - "*"
 
 jobs:
   terraform:
@@ -63,5 +62,5 @@ jobs:
 
       # 🚀 APPLY (somente em push, não em PR)
       - name: Terraform Apply
-        if: github.event_name == 'push'
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve -var-file="envs/${ENV}.tfvars"
