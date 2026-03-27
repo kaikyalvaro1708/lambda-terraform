@@ -1,118 +1,67 @@
-name: Terraform Multi-Env Deploy
+name: Terraform Multi-Env Pipeline
 
 on:
   pull_request:
     branches:
-      - dev
-      - main
+      - develop
 
   push:
     branches:
-      - dev
+      - develop
       - main
 
 jobs:
-  # =========================
-  # PLAN (PRs)
-  # =========================
-  plan:
-    if: github.event_name == 'pull_request'
+  terraform:
     runs-on: ubuntu-latest
 
     defaults:
       run:
         working-directory: terraform
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Configure AWS
+      # 🔹 Define ambiente baseado na branch
+      - name: Set environment
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            echo "ENV=prod" >> $GITHUB_ENV
+          else
+            echo "ENV=dev" >> $GITHUB_ENV
+          fi
+
+      # 🔐 Autenticação AWS (via secrets por enquanto)
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      # ⚙️ Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # 📦 Init com backend dinâmico
       - name: Terraform Init
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="key=${ENV}/lambda/terraform.tfstate"
 
+      # 🔍 Validate
       - name: Terraform Validate
         run: terraform validate
 
+      # 🧪 PLAN (sempre roda)
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -var-file="envs/${ENV}.tfvars"
 
-  # =========================
-  # DEV DEPLOY
-  # =========================
-  deploy-dev:
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: terraform
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Define ENV
-        run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/dev" ]]; then
-            echo "ENV=dev" >> $GITHUB_ENV
-          else
-            echo "ENV=prod" >> $GITHUB_ENV
-          fi
-
-      - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Apply (DEV)
-        run: terraform apply -auto-approve
-
-  # =========================
-  # PROD DEPLOY
-  # =========================
-  deploy-prod:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    environment: prod
-
-    defaults:
-      run:
-        working-directory: terraform
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Configure AWS (PROD)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Apply (PROD)
-        run: terraform apply -auto-approve
+      # 🚀 APPLY (somente em push, não em PR)
+      - name: Terraform Apply
+        if: github.event_name == 'push'
+        run: terraform apply -auto-approve -var-file="envs/${ENV}.tfvars"
