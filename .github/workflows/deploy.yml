@@ -61,6 +61,13 @@ jobs:
       #   run: |
       #     python ../lambda/app.py
 
+      - name: Debug files
+        run: |
+          echo "Current dir:"
+          pwd
+          echo "Files:"
+          ls -R
+
       # ⚙️ Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
