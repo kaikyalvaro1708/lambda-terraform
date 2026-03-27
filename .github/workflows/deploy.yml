@@ -1,69 +1,92 @@
-name: Terraform Multi-Env Deploy
+name: Terraform Multi-Env Pipeline
 
 on:
   push:
     branches:
+      - "**" # qualquer branch
+
+  pull_request:
+    branches:
+      - develop
       - main
-      - dev
 
 jobs:
-  # =========================
-  # DEV
-  # =========================
-  deploy-dev:
-    if: github.ref == 'refs/heads/dev'
+  terraform:
     runs-on: ubuntu-latest
-    environment: dev
 
     defaults:
       run:
         working-directory: terraform
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: Configure AWS (DEV)
+      # 🔹 Define ambiente corretamente
+      - name: Set environment
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+
+          echo "Branch: $BRANCH_NAME"
+
+          if [[ "$BRANCH_NAME" == "main" ]]; then
+            echo "ENV=prod" >> $GITHUB_ENV
+          else
+            echo "ENV=dev" >> $GITHUB_ENV
+          fi
+
+      # 🔐 AWS
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - uses: hashicorp/setup-terraform@v3
+      # # 🐍 Setup Python
+      # - name: Setup Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.9"
 
-      - run: terraform init
-      - run: terraform validate
-      - run: terraform plan
+      # # 📦 Instalar dependências (se tiver requirements.txt)
+      # - name: Install dependencies
+      #   run: |
+      #     if [ -f ../lambda/requirements.txt ]; then
+      #       pip install -r ../lambda/requirements.txt
+      #     fi
 
-      - run: terraform apply -auto-approve
+      # # ▶️ Testar execução básica
+      # - name: Run Python script
+      #   run: |
+      #     python ../lambda/app.py
 
-  # =========================
-  # PROD
-  # =========================
-  deploy-prod:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment: prod
+      - name: Debug files
+        run: |
+          echo "Current dir:"
+          pwd
+          echo "Files:"
+          ls -R
 
-    defaults:
-      run:
-        working-directory: terraform
+      # ⚙️ Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-    steps:
-      - uses: actions/checkout@v3
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="key=${ENV}/lambda/terraform.tfstate"
 
-      - name: Configure AWS (PROD)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+      - name: Terraform Validate
+        run: terraform validate
 
-      - uses: hashicorp/setup-terraform@v3
+      # 🧪 SEMPRE roda plan
+      - name: Terraform Plan
+        run: terraform plan -var-file="envs/${ENV}.tfvars"
 
-      - run: terraform init
-      - run: terraform validate
-      - run: terraform plan
-
-      # 🔥 Aqui você pode exigir aprovação manual
-      - run: terraform apply -auto-approve
+      # 🚀 APPLY apenas em develop ou main
+      - name: Terraform Apply
+        if: |
+          github.event_name == 'push' &&
+          (endsWith(github.ref, '/develop') || endsWith(github.ref, '/main'))
+        run: terraform apply -auto-approve -var-file="envs/${ENV}.tfvars"

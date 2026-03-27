@@ -6,6 +6,9 @@
 .terraform/
 .tfvars
 
+!terraform/envs/dev.tfvars
+!terraform/envs/prod.tfvars
+
 # State files (NUNCA subir)
 *.tfstate
 *.tfstate.*
@@ -17,7 +20,6 @@
 crash.log
 
 # Variáveis sensíveis
-*.tfvars
 *.tfvars.json
 
 # Overrides
