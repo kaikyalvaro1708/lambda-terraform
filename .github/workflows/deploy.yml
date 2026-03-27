@@ -3,12 +3,13 @@ name: Terraform Multi-Env Pipeline
 on:
   push:
     branches:
-      - "*"
+      - "**" # qualquer branch
 
   pull_request:
     branches:
       - develop
       - main
+
 jobs:
   terraform:
     runs-on: ubuntu-latest
@@ -17,24 +18,24 @@ jobs:
       run:
         working-directory: terraform
 
-    permissions:
-      id-token: write
-      contents: read
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # 🔹 Define ambiente baseado na branch
+      # 🔹 Define ambiente corretamente
       - name: Set environment
         run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+
+          echo "Branch: $BRANCH_NAME"
+
+          if [[ "$BRANCH_NAME" == "main" ]]; then
             echo "ENV=prod" >> $GITHUB_ENV
           else
             echo "ENV=dev" >> $GITHUB_ENV
           fi
 
-      # 🔐 Autenticação AWS (via secrets por enquanto)
+      # 🔐 AWS
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -42,25 +43,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # ⚙️ Setup Terraform
+      # ⚙️ Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # 📦 Init com backend dinâmico
       - name: Terraform Init
         run: |
           terraform init \
             -backend-config="key=${ENV}/lambda/terraform.tfstate"
 
-      # 🔍 Validate
       - name: Terraform Validate
         run: terraform validate
 
-      # 🧪 PLAN (sempre roda)
+      # 🧪 SEMPRE roda plan
       - name: Terraform Plan
         run: terraform plan -var-file="envs/${ENV}.tfvars"
 
-      # 🚀 APPLY (somente em push, não em PR)
+      # 🚀 APPLY apenas em develop ou main
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+        if: |
+          github.event_name == 'push' &&
+          (endsWith(github.ref, '/develop') || endsWith(github.ref, '/main'))
         run: terraform apply -auto-approve -var-file="envs/${ENV}.tfvars"
