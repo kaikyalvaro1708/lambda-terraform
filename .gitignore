@@ -20,7 +20,6 @@
 crash.log
 
 # Variáveis sensíveis
-*.tfvars
 *.tfvars.json
 
 # Overrides
