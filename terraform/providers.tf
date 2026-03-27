@@ -12,7 +12,7 @@ terraform {
 
   backend "s3" {
     bucket = "lambda-collector-tfstate"
-    key    = "lambda/terraform.tfstate"
+    key = "${var.environment}/lambda/terraform.tfstate"    
     region = "us-east-1"
   }
 }

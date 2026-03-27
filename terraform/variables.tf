@@ -4,8 +4,13 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "environment" {
+  description = "Ambiente (dev ou prod)"
+  type        = string
+}
+
 variable "lambda_name" {
-  description = "lambda_test_terraform"
+  description = "Nome base da lambda"
   type        = string
   default     = "lambda_collector"
 }
@@ -21,3 +26,14 @@ variable "lambda_handler" {
   type        = string
   default     = "app.lambda_handler"
 }
+
+variable "vpc_cidr" {
+  description = "CIDR da VPC"
+  type        = string
+}
+
+# variable "youtube_api_key" {
+#   description = "API Key do YouTube"
+#   type        = string
+#   sensitive   = true
+# }

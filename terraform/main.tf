@@ -29,7 +29,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 
 # LAMBDA
 resource "aws_lambda_function" "lambda" {
-  function_name = var.lambda_name
+  function_name = "${var.environment}-${var.lambda_name}"
 
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
@@ -39,7 +39,23 @@ resource "aws_lambda_function" "lambda" {
 
   role = aws_iam_role.lambda_role.arn
 
+  timeout = 15
+
+#   environment {
+#     variables = {
+#       YOUTUBE_API_KEY = var.youtube_api_key
+#     }
+#   }
+
   depends_on = [
     aws_iam_role_policy_attachment.lambda_basic
   ]
+}
+
+resource "aws_vpc" "main" {
+  cidr_block = var.vpc_cidr
+
+  tags = {
+    Name = "${var.environment}-vpc"
+  }
 }
