@@ -7,13 +7,8 @@ on:
       - dev
 
 jobs:
-  # =========================
-  # DEV
-  # =========================
-  deploy-dev:
-    if: github.ref == 'refs/heads/dev'
+  deploy:
     runs-on: ubuntu-latest
-    environment: dev
 
     defaults:
       run:
@@ -22,7 +17,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Configure AWS (DEV)
+      - name: Define ENV
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/dev" ]]; then
+            echo "ENV=dev" >> $GITHUB_ENV
+          else
+            echo "ENV=prod" >> $GITHUB_ENV
+          fi
+
+      - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -31,39 +34,13 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
 
-      - run: terraform init
-      - run: terraform validate
-      - run: terraform plan
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="key=${ENV}/lambda/terraform.tfstate"
 
-      - run: terraform apply -auto-approve
+      - name: Terraform Plan
+        run: terraform plan -var-file="envs/${ENV}.tfvars"
 
-  # =========================
-  # PROD
-  # =========================
-  deploy-prod:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment: prod
-
-    defaults:
-      run:
-        working-directory: terraform
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Configure AWS (PROD)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - uses: hashicorp/setup-terraform@v3
-
-      - run: terraform init
-      - run: terraform validate
-      - run: terraform plan
-
-      # 🔥 Aqui você pode exigir aprovação manual
-      - run: terraform apply -auto-approve
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -var-file="envs/${ENV}.tfvars"
