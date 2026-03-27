@@ -1,14 +1,14 @@
 name: Terraform Multi-Env Pipeline
 
 on:
-  pull_request:
-    branches:
-      - develop
-
   push:
     branches:
       - "*"
 
+  pull_request:
+    branches:
+      - develop
+      - main
 jobs:
   terraform:
     runs-on: ubuntu-latest
