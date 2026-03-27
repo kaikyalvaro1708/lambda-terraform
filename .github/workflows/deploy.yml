@@ -43,23 +43,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # 🐍 Setup Python
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
+      # # 🐍 Setup Python
+      # - name: Setup Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.9"
 
-      # 📦 Instalar dependências (se tiver requirements.txt)
-      - name: Install dependencies
-        run: |
-          if [ -f ../lambda/requirements.txt ]; then
-            pip install -r ../lambda/requirements.txt
-          fi
+      # # 📦 Instalar dependências (se tiver requirements.txt)
+      # - name: Install dependencies
+      #   run: |
+      #     if [ -f ../lambda/requirements.txt ]; then
+      #       pip install -r ../lambda/requirements.txt
+      #     fi
 
-      # ▶️ Testar execução básica
-      - name: Run Python script
-        run: |
-          python ../lambda/app.py
+      # # ▶️ Testar execução básica
+      # - name: Run Python script
+      #   run: |
+      #     python ../lambda/app.py
 
       # ⚙️ Terraform
       - name: Setup Terraform
